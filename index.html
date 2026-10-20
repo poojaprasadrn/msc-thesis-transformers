@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transformers vs Web Spam · Pooja Prasad</title>
+<meta name="description" content="M.Sc. thesis project page: a hybrid DistilBERT pipeline and a TF-IDF + SVM detector for spam reviews and AI-generated text across 8 million search results (2022–2024).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap" rel="stylesheet">
+<style>
+/* Palette from figures4papers (ChenLiu-1996): blues = proposed method, greens = improvements,
+   reds = baselines and errors, neutral = background, gold = highlight */
+:root{
+  --blue:#0F4D92; --blue2:#3775BA; --teal:#42949E; --violet:#9A4D8E;
+  --green1:#DDF3DE; --green2:#AADCA9; --green3:#8BCF8B; --green-ink:#2f7a3b;
+  --red1:#F6CFCB; --red2:#E9A6A1; --red:#B64342; --neutral:#CFCECE; --gold:#FFD700;
+  --bg:#ffffff; --bg2:#f6f8fb; --panel:#ffffff; --panel2:#eef3f9; --line:#dfe4ec;
+  --fg:#16202e; --muted:#4a5568; --dim:#7b8595;
+  --radius:14px; --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  --shadow:0 1px 2px rgba(15,77,146,.06),0 8px 24px -12px rgba(15,77,146,.18);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.65 Inter,system-ui,-apple-system,Segoe UI,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--blue2);text-decoration:none}a:hover{text-decoration:underline}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+section{padding:84px 0;position:relative}
+section:nth-of-type(even){background:var(--bg2)}
+section+section{border-top:1px solid var(--line)}
+h1,h2,h3{line-height:1.15;margin:0;color:var(--fg)}
+h2{font-family:Fraunces,Georgia,serif;font-weight:800;font-size:clamp(28px,4vw,42px);letter-spacing:-.01em}
+h3{font-size:19px;font-weight:700}
+p{margin:.6em 0}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--blue2);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.eyebrow b{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;background:var(--blue);color:#fff;font-size:12px}
+.lede{color:var(--muted);font-size:18px;max-width:760px}
+.grad-text{color:var(--blue)}
+.muted{color:var(--muted)} .small{font-size:13.5px} .mono{font-family:var(--mono)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:860px){.g2,.g3,.g4{grid-template-columns:1fr}}
+@media (min-width:561px) and (max-width:860px){.g4{grid-template-columns:repeat(2,1fr)}}
+
+nav.top{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav.top .wrap{display:flex;align-items:center;gap:14px;height:58px}
+nav.top .brand{font-weight:800;letter-spacing:-.01em;white-space:nowrap}
+nav.top .links{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin-left:auto}
+nav.top .links::-webkit-scrollbar{display:none}
+nav.top .links a{color:var(--muted);font-size:13.5px;padding:6px 10px;border-radius:8px;white-space:nowrap}
+nav.top .links a:hover,nav.top .links a.on{color:var(--blue);background:var(--panel2);text-decoration:none}
+.open{display:inline-flex;align-items:center;gap:7px;font:600 12px/1 Inter,sans-serif;color:var(--green-ink);background:var(--green1);border:1px solid var(--green2);padding:6px 10px;border-radius:999px;white-space:nowrap}
+.open:hover{text-decoration:none;border-color:var(--green3)}
+.open i{width:7px;height:7px;border-radius:50%;background:#3a9a4a;box-shadow:0 0 0 3px rgba(139,207,139,.45)}
+#progress{position:absolute;left:0;bottom:-1px;height:2px;width:0;background:var(--blue)}
+@media (max-width:760px){nav.top .brand{display:none}}
+
+.hero{padding:80px 0 66px;overflow:hidden;background:linear-gradient(180deg,#f3f7fc,#fff)}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.7}
+.hero .wrap{position:relative;z-index:1}
+.tag{display:inline-flex;gap:8px;align-items:center;font:600 12.5px/1 var(--mono);color:var(--blue);background:#fff;border:1px solid var(--line);padding:7px 11px;border-radius:999px}
+.hero h1{font-family:Fraunces,Georgia,serif;font-weight:800;font-size:clamp(34px,5.4vw,62px);letter-spacing:-.02em;margin:22px 0 18px;max-width:980px}
+.hero .who{display:flex;flex-wrap:wrap;gap:6px 22px;color:var(--muted);font-size:15px}
+.hero .who strong{color:var(--fg)}
+.hero .q{font-size:clamp(18px,2.2vw,22px);max-width:820px;margin:26px 0 8px;color:var(--fg)}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:999px;background:#fff;border:1px solid var(--line);color:var(--fg);font-weight:600;font-size:14.5px;cursor:pointer;transition:.2s}
+.btn:hover{text-decoration:none;border-color:var(--blue2);transform:translateY(-1px)}
+.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-top:46px}
+@media (max-width:980px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:520px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:#fff;border:1px solid var(--line);border-top:3px solid var(--c,var(--blue));border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+.kpi .v{font:800 clamp(22px,3vw,30px)/1.05 Fraunces,Georgia,serif;font-variant-numeric:tabular-nums;color:var(--c,var(--blue))}
+.kpi .l{color:var(--muted);font-size:12.5px;margin-top:6px;line-height:1.35}
+.kpi:nth-child(6n+1){--c:var(--blue)}.kpi:nth-child(6n+2){--c:var(--blue2)}.kpi:nth-child(6n+3){--c:var(--teal)}
+.kpi:nth-child(6n+4){--c:var(--green-ink)}.kpi:nth-child(6n+5){--c:var(--violet)}.kpi:nth-child(6n+6){--c:var(--red)}
+
+.contrib{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:34px}
+@media (max-width:980px){.contrib{grid-template-columns:repeat(2,1fr)}}@media (max-width:560px){.contrib{grid-template-columns:1fr}}
+.contrib .card{position:relative;overflow:hidden}
+.contrib .card:before{content:"";position:absolute;inset:0 0 auto;height:3px;background:var(--neutral)}
+.contrib .card.hl{background:#f2f7fd;border-color:var(--blue2)}
+.contrib .card.hl:before{background:var(--blue)}
+.contrib .n{font:600 12px var(--mono);color:var(--dim)}
+.contrib h3{margin:8px 0 6px;font-size:17px}
+.contrib p{color:var(--muted);font-size:14px;margin:0}
+.pill{display:inline-block;font:600 11px/1 var(--mono);padding:5px 8px;border-radius:6px;background:var(--panel2);color:var(--blue);margin-top:10px}
+
+.arch{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;margin-top:34px}
+@media (max-width:900px){.arch{grid-template-columns:1fr}}
+.flow{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;display:grid;gap:10px;box-shadow:var(--shadow)}
+.lane{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center}
+.lane .lab{font:600 11px var(--mono);color:var(--dim);writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.1em;text-transform:uppercase}
+.row{display:flex;align-items:stretch;gap:6px;flex-wrap:wrap}
+.blk{flex:1 1 110px;min-width:96px;text-align:left;cursor:pointer;background:var(--bg2);border:1.5px solid var(--line);color:var(--fg);border-radius:10px;padding:10px 12px;font:inherit;transition:.18s;position:relative}
+.blk small{display:block;font:500 11px/1.3 var(--mono);color:var(--dim);margin-top:3px}
+.blk strong{font-size:13.5px;line-height:1.25;display:block}
+.blk:hover{border-color:var(--c)}
+.blk.on{background:#fff;border-color:var(--c);box-shadow:0 0 0 3px rgba(55,117,186,.18)}
+.blk.t{--c:var(--blue)} .blk.f{--c:var(--violet)} .blk.m{--c:var(--teal)}
+.blk:after{content:"";position:absolute;left:12px;top:-1px;width:26px;height:3px;border-radius:0 0 3px 3px;background:var(--c)}
+.arrow{align-self:center;color:var(--dim);font-size:16px;flex:0 0 auto}
+.merge{display:flex;justify-content:center;color:var(--dim);font:600 11px var(--mono);gap:8px;align-items:center}
+.merge:before,.merge:after{content:"";height:1px;flex:1;background:var(--line)}
+.detail{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;min-height:340px;box-shadow:var(--shadow)}
+.detail .shape{display:inline-block;font:600 12.5px var(--mono);background:var(--panel2);color:var(--blue);border:1px solid #cddcee;padding:5px 9px;border-radius:7px;margin:6px 6px 0 0}
+.detail ul{padding-left:18px;margin:10px 0 0;color:var(--muted)}
+.detail li{margin:4px 0}
+.detail h3{font-size:20px}
+.detail code{font-family:var(--mono);font-size:13px;background:var(--bg2);padding:1px 5px;border-radius:4px}
+.legend-mini{display:flex;flex-wrap:wrap;gap:14px;margin-top:6px;font-size:12.5px;color:var(--muted)}
+.legend-mini i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+pre.code{position:relative;margin:0;background:#f7f9fc;border:1px solid var(--line);border-radius:12px;padding:18px;overflow:auto;font:13px/1.6 var(--mono);color:#1f2a3a}
+pre.code .k{color:var(--violet);font-weight:600}pre.code .s{color:var(--green-ink)}pre.code .c{color:#8a93a3;font-style:italic}pre.code .n{color:var(--red)}pre.code .fn{color:var(--blue)}
+.copy{position:absolute;top:10px;right:10px;font:600 11.5px var(--mono);background:#fff;color:var(--muted);border:1px solid var(--line);border-radius:7px;padding:5px 9px;cursor:pointer}
+.copy:hover{color:var(--blue)}
+
+.seg{display:inline-flex;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:4px;gap:4px;flex-wrap:wrap}
+.seg button{background:none;border:0;color:var(--muted);font:600 13.5px Inter,sans-serif;padding:8px 14px;border-radius:8px;cursor:pointer}
+.seg button.on{background:#fff;color:var(--blue);box-shadow:0 1px 3px rgba(15,77,146,.18)}
+.ctrls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:26px 0 18px}
+
+svg text{font-family:Inter,sans-serif;fill:var(--muted)}
+.chart{width:100%;height:auto;display:block}
+.tip{position:fixed;pointer-events:none;z-index:99;background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:13px;color:var(--fg);box-shadow:0 8px 24px rgba(16,32,46,.16);opacity:0;transition:opacity .12s;max-width:260px}
+
+.cm{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;align-items:stretch;max-width:380px}
+.cm .h{font:600 11.5px var(--mono);color:var(--dim);display:flex;align-items:center;justify-content:center;text-align:center;padding:4px}
+.cm .cell{border-radius:10px;aspect-ratio:1.45;display:grid;place-items:center;font:800 30px Fraunces,serif;cursor:default;transition:.15s;position:relative;border:1px solid transparent}
+.cm .cell span{position:absolute;bottom:8px;font:600 10.5px var(--mono)}
+.cm .cell.ok{background:var(--green2);color:#1c4d24;border-color:var(--green3)}
+.cm .cell.bad{background:var(--red1);color:var(--red);border-color:var(--red2)}
+.cm .cell:hover,.cm .cell.hot{outline:2px solid var(--blue);outline-offset:2px}
+.metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.metric{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px;cursor:default;transition:.15s}
+.metric:hover{border-color:var(--blue2)}
+.metric .v{font:800 24px Fraunces,serif}.metric .l{font-size:12px;color:var(--muted)}
+.metric .f{font:500 11px var(--mono);color:var(--dim);margin-top:4px}
+
+input[type=range]{width:100%;accent-color:var(--blue)}
+.slider{display:grid;grid-template-columns:150px 1fr 70px;gap:12px;align-items:center;margin:10px 0}
+@media (max-width:560px){.slider{grid-template-columns:1fr 60px}.slider label{grid-column:1/-1}}
+.slider output{font:600 14px var(--mono);text-align:right}
+.big{font:800 clamp(34px,5vw,52px)/1 Fraunces,serif;color:var(--blue)}
+
+textarea{width:100%;min-height:150px;background:#fff;color:var(--fg);border:1px solid var(--line);border-radius:11px;padding:14px;font:14.5px/1.55 Inter,sans-serif;resize:vertical}
+textarea:focus{outline:2px solid var(--blue2);outline-offset:1px}
+.feat{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+@media (max-width:700px){.feat{grid-template-columns:repeat(2,1fr)}}
+.feat .metric .v{font-size:22px;color:var(--blue)}
+.chunks{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap}
+.chunks i{height:26px;flex:1 1 40px;max-width:120px;border-radius:6px;background:var(--blue2);display:grid;place-items:center;font:600 10.5px/1 var(--mono);color:#fff;font-style:normal}
+.chunks i.part{background:#a9c3e3}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:13px;padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--fg)}
+.chip:hover{border-color:var(--blue2);color:var(--blue)}
+
+.tax{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:820px){.tax{grid-template-columns:1fr}}
+.tax h4{margin:0 0 10px;font:600 12px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.tax .lbl{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 12px;margin:6px 0;color:var(--fg);font:500 14px Inter,sans-serif;cursor:pointer}
+.tax .lbl:hover,.tax .lbl.on{border-color:var(--blue2)}
+.tax .lbl small{display:none;color:var(--muted);font-size:13px;margin-top:4px;line-height:1.45}
+.tax .lbl.on small{display:block}
+figure{margin:0}
+figure img{width:100%;height:auto;display:block;border-radius:10px;border:1px solid var(--line);background:#fff}
+figcaption{color:var(--dim);font-size:13px;margin-top:8px}
+
+.find{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.find{grid-template-columns:1fr}}
+.rbadge{display:inline-flex;align-items:baseline;gap:8px;padding:10px 14px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);margin:6px 8px 0 0}
+.rbadge b{font:800 26px Fraunces,serif}
+.rbadge.sig{background:var(--green1);border-color:var(--green2)}.rbadge.sig b{color:var(--green-ink)}
+.rbadge.ns{background:#f3f3f3;border-color:var(--neutral)}.rbadge.ns b{color:#6b6b6b}
+.callout{border-radius:var(--radius);padding:26px;background:#fff8d6;border:1px solid #f0d95a;box-shadow:var(--shadow)}
+.callout .big{color:var(--red)}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{color:var(--dim);font:600 11.5px var(--mono);text-transform:uppercase;letter-spacing:.06em}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tablebox{overflow-x:auto}
+
+.check{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.check li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;background:#fff;border:1px solid var(--line);border-radius:11px;padding:14px}
+.check li:before{content:"✓";display:grid;place-items:center;width:28px;height:28px;border-radius:7px;background:var(--green1);color:var(--green-ink);font-weight:800}
+.check b{display:block}
+.check span{color:var(--muted);font-size:14px}
+.lim li:before{content:"!";background:var(--red1);color:var(--red)}
+
+.contact{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px;padding:22px 24px;border-radius:var(--radius);background:#f2f7fd;border:1px solid #cddcee;margin-top:28px}
+.contact p{margin:0;flex:1 1 380px;color:var(--muted)}
+.contact p b{color:var(--fg)}
+footer{padding:36px 0 56px;color:var(--dim);font-size:13.5px;border-top:1px solid var(--line)}
+
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <div class="wrap">
+    <div class="brand">Pooja Prasad <span class="muted">· M.Sc. thesis</span></div>
+    <div class="links" id="navlinks">
+      <a href="#transformer">Transformer</a>
+      <a href="#backbones">Backbones</a>
+      <a href="#cascade">Two-stage</a>
+      <a href="#scale">At scale</a>
+      <a href="#playground">Playground</a>
+      <a href="#data">Data</a>
+      <a href="#ai">AI detection</a>
+      <a href="#findings">Findings</a>
+      <a href="#cite">Cite</a>
+    </div>
+    <a class="open" href="#hire" title="Open to ML engineering roles"><i></i>Open to work</a>
+  </div>
+  <div id="progress"></div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero" id="top" style="position:relative">
+  <canvas id="net" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <span class="tag">● M.Sc. Thesis · Bauhaus-Universität Weimar · Webis group · 2025</span>
+    <h1>Transformers vs. web spam: <span class="grad-text">tracking AI text and fake reviews</span> across 8 million search results</h1>
+    <div class="who">
+      <span><strong>Pooja Prasad</strong></span>
+      <span>Supervisor: Janek Bevendorff</span>
+      <span>Referees: Prof. Dr. Benno Stein · PD Dr. Andreas Jakoby</span>
+      <span>Submitted Nov 24, 2025</span>
+    </div>
+    <p class="q">Can a transformer tell a genuine product review from SEO spam, and has generative AI changed what search engines show us?</p>
+    <p class="muted" style="max-width:820px">I fine-tuned a <b style="color:var(--fg)">hybrid DistilBERT model</b> that fuses contextual embeddings with linguistic features, ran it as a two-stage cascade over <b style="color:var(--fg)">360,000+ web pages</b> on an HPC cluster, and paired it with a fast TF-IDF + SVM detector applied to all <b style="color:var(--fg)">8,073,367 pages</b> collected from Bing, DuckDuckGo and Startpage between 2022 and 2024.</p>
+    <div class="btns">
+      <a class="btn primary" href="#transformer">Explore the transformer ↓</a>
+      <a class="btn" href="Report.pdf" target="_blank" rel="noopener">📄 Thesis PDF</a>
+      <a class="btn" href="Slides.pdf" target="_blank" rel="noopener">🎞 Slides</a>
+      <a class="btn" href="#cite">📝 BibTeX</a>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="v" data-count="8073367">8,073,367</div><div class="l">web pages classified for AI authorship</div></div>
+      <div class="kpi"><div class="v" data-count="360000" data-suffix="+">360,000+</div><div class="l">pages through the transformer cascade</div></div>
+      <div class="kpi"><div class="v">3</div><div class="l">transformer backbones fine-tuned and compared</div></div>
+      <div class="kpi"><div class="v">~70%</div><div class="l">less wall-clock time from 4-node SLURM inference</div></div>
+      <div class="kpi"><div class="v">α 0.84</div><div class="l">inter-annotator agreement on my labelled dataset</div></div>
+      <div class="kpi"><div class="v">99.5%</div><div class="l">test accuracy, AI-vs-human detector (PAN 2024)</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ CONTRIBUTIONS ============ -->
+<section id="contrib" style="padding-top:60px">
+  <div class="wrap">
+    <div class="eyebrow">What I built</div>
+    <h2>Four contributions, one pipeline</h2>
+    <div class="contrib">
+      <div class="card hl reveal"><div class="n">01 · core</div><h3>Hybrid transformer classifier</h3><p>A custom PyTorch module that concatenates DistilBERT's [CLS] embedding with about 2,000 selected linguistic features before a single classification head.</p><span class="pill">PyTorch · 🤗 Transformers</span></div>
+      <div class="card reveal"><div class="n">02</div><h3>Two-stage cascade at web scale</h3><p>Review vs. non-review, then good vs. spam. Deployed with SLURM and Singularity across 4 nodes, with sharding and checkpoint-resume.</p><span class="pill">SLURM · Docker · HPC</span></div>
+      <div class="card reveal"><div class="n">03</div><h3>Human-annotated ground truth</h3><p>A custom annotation platform, a 10-label taxonomy, 9 annotators, 300 screenshots, and a three-way check against GPT-5 vision labels.</p><span class="pill">Annotation · α = 0.84</span></div>
+      <div class="card reveal"><div class="n">04</div><h3>Two-year trend analysis</h3><p>Monthly AI-attribution and spam rates per search engine, with Pearson trend tests and an AI-vs-spam correlation over about 2.9M review documents.</p><span class="pill">8M pages · 3 engines</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TRANSFORMER ARCHITECTURE ============ -->
+<section id="transformer">
+  <div class="wrap">
+    <div class="eyebrow"><b>1</b> The model</div>
+    <h2>A transformer that also reads <span class="grad-text">style</span></h2>
+    <p class="lede">Spam reviews are often fluent and grammatical, so semantics alone isn't enough. My model runs two branches in parallel: DistilBERT encodes <em>what the page says</em>, and a feature branch measures <em>how it is written</em>. Their outputs are concatenated and fed to one trainable head. <b style="color:var(--fg)">Click any block</b> to see what it does and the shape of its output.</p>
+
+    <div class="arch">
+      <div class="flow reveal" id="flow">
+        <div class="lane"><span class="lab">Semantic</span>
+          <div class="row">
+            <button class="blk t" data-k="text"><strong>Page text</strong><small>resiliparse</small></button><span class="arrow">→</span>
+            <button class="blk t" data-k="tok"><strong>Tokenizer</strong><small>WordPiece · 512</small></button><span class="arrow">→</span>
+            <button class="blk t" data-k="enc"><strong>DistilBERT</strong><small>6 layers · 768-d</small></button><span class="arrow">→</span>
+            <button class="blk t" data-k="cls"><strong>[CLS] vector</strong><small>768</small></button>
+          </div>
+        </div>
+        <div class="lane"><span class="lab">Stylistic</span>
+          <div class="row">
+            <button class="blk f" data-k="feats"><strong>Hand-crafted features</strong><small>TF-IDF · POS · readability</small></button><span class="arrow">→</span>
+            <button class="blk f" data-k="mi"><strong>SelectKBest</strong><small>mutual info · ~2,000</small></button><span class="arrow">→</span>
+            <button class="blk f" data-k="scale"><strong>StandardScaler</strong><small>fit on train only</small></button>
+          </div>
+        </div>
+        <div class="merge">torch.cat(dim=1)</div>
+        <div class="lane"><span class="lab">Head</span>
+          <div class="row">
+            <button class="blk m" data-k="cat"><strong>Fused vector</strong><small>768 + k</small></button><span class="arrow">→</span>
+            <button class="blk m" data-k="drop"><strong>Dropout</strong><small>p = 0.3</small></button><span class="arrow">→</span>
+            <button class="blk m" data-k="lin"><strong>Linear</strong><small>→ 2 logits</small></button><span class="arrow">→</span>
+            <button class="blk m" data-k="train"><strong>Fine-tuning</strong><small>AdamW · CE loss</small></button>
+          </div>
+        </div>
+        <div class="legend-mini"><span><i style="background:var(--blue)"></i>Transformer branch</span><span><i style="background:var(--violet)"></i>Feature branch</span><span><i style="background:var(--teal)"></i>Fusion head and training</span></div>
+      </div>
+      <div class="detail reveal" id="detail" aria-live="polite"></div>
+    </div>
+
+    <div class="grid g2" style="margin-top:22px">
+      <div class="reveal">
+        <h3 style="margin-bottom:10px">The actual module</h3>
+<pre class="code" id="code1"><button class="copy" data-copy="code1">copy</button><span class="k">class</span> <span class="fn">BERTWithFeatures</span>(nn.Module):
+    <span class="k">def</span> <span class="fn">__init__</span>(self, feature_dim, num_labels):
+        super().__init__()
+        self.bert = DistilBertModel.from_pretrained(
+            <span class="s">"distilbert-base-uncased"</span>)
+        self.dropout = nn.Dropout(<span class="n">0.3</span>)
+        self.classifier = nn.Linear(
+            self.bert.config.hidden_size + feature_dim, num_labels)
+
+    <span class="k">def</span> <span class="fn">forward</span>(self, input_ids, attention_mask, extra_features):
+        <span class="c"># [CLS] token of the last hidden layer</span>
+        h = self.bert(input_ids=input_ids,
+                      attention_mask=attention_mask
+                      ).last_hidden_state[:, <span class="n">0</span>, :]
+        <span class="c"># late fusion: semantics ⊕ style</span>
+        z = torch.cat((h, extra_features), dim=<span class="n">1</span>)
+        <span class="k">return</span> self.classifier(self.dropout(z))</pre>
+      </div>
+      <div class="reveal">
+        <h3 style="margin-bottom:10px">Why fuse instead of fine-tuning BERT alone?</h3>
+        <ul class="check">
+          <li><div><b>Spam hides in style, not meaning</b><span>Keyword stuffing, repeated templates and very simple sentences show up in TF-IDF n-grams, POS ratios and readability scores. A sequence classifier trained on 300 pages has little chance to learn these signals on its own.</span></div></li>
+          <li><div><b>Interpretable signals</b><span>Each feature has a name, such as adjective ratio, punctuation density or Flesch score, so errors can be explained, not only measured.</span></div></li>
+          <li><div><b>Cheap to add</b><span>About 2,000 extra inputs to one linear layer, while the encoder is unchanged, so inference cost is dominated by DistilBERT.</span></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BACKBONES ============ -->
+<section id="backbones">
+  <div class="wrap">
+    <div class="eyebrow"><b>2</b> Model selection</div>
+    <h2>BERT, DistilBERT or RoBERTa?</h2>
+    <p class="lede">I fine-tuned all three backbones in the same hybrid setup and evaluated both stages. The smallest model won on accuracy <em>and</em> speed, which mattered when the target was hundreds of thousands of pages.</p>
+    <div class="ctrls">
+      <div class="seg" id="bbSeg"><button data-b="0">BERT-base</button><button data-b="1" class="on">DistilBERT</button><button data-b="2">RoBERTa-base</button></div>
+    </div>
+    <div class="grid g2">
+      <div class="card reveal"><svg id="bbChart" class="chart" viewBox="0 0 520 300" role="img" aria-label="Accuracy of three transformer backbones on both stages"></svg>
+        <p class="small muted" style="margin-top:6px">Accuracy on the held-out annotated set (thesis Table 5.4). The y-axis starts at 0.</p></div>
+      <div class="card reveal" id="bbInfo"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CASCADE ============ -->
+<section id="cascade">
+  <div class="wrap">
+    <div class="eyebrow"><b>3</b> Two-stage cascade</div>
+    <h2>Filter first, then judge quality</h2>
+    <p class="lede">Most search results aren't reviews at all. Stage 1 removes shops, guides and news pages. Only pages predicted as reviews go on to stage 2, which also saves compute because stage 2 is skipped for everything else.</p>
+    <div class="ctrls"><div class="seg" id="stSeg"><button data-s="1" class="on">Stage 1 · Review vs. non-review</button><button data-s="2">Stage 2 · Good vs. spam</button></div></div>
+    <div class="grid g2">
+      <div class="card reveal">
+        <div class="cm" id="cm"></div>
+        <div class="metric-row" id="cmMetrics"></div>
+        <p class="small muted" style="margin-top:12px">Hover a metric to highlight the cells it uses. Counts are from the test confusion matrices (thesis Fig. 5.4).</p>
+      </div>
+      <div class="card reveal" id="stInfo"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCALE ============ -->
+<section id="scale">
+  <div class="wrap">
+    <div class="eyebrow"><b>4</b> Deployment</div>
+    <h2>From notebook to <span class="grad-text">HPC cluster</span></h2>
+    <p class="lede">Training a model is half the job. To run both stages over 360,000+ pages, I packaged the pipeline in a container and sharded it across the Webis cluster.</p>
+    <div class="grid g2" style="margin-top:28px">
+      <div class="card reveal">
+        <h3>Per-document latency</h3>
+        <svg id="latChart" class="chart" viewBox="0 0 520 210" role="img" aria-label="Latency per document by stage"></svg>
+        <p class="small muted">Measured on 100 sampled documents, including feature extraction. Stage 2 runs only on predicted reviews, so the average total is below the sum of both stages. The range is 356–1,808 ms.</p>
+      </div>
+      <div class="card reveal">
+        <h3>Throughput estimator</h3>
+        <p class="small muted">Measured throughput was about 80–100 docs/min per node. Move the sliders to see how the run scales. Scaling was nearly linear in practice.</p>
+        <div class="slider"><label for="sNodes">Compute nodes</label><input id="sNodes" type="range" min="1" max="8" value="4"><output id="oNodes">4</output></div>
+        <div class="slider"><label for="sRate">Docs/min per node</label><input id="sRate" type="range" min="80" max="100" value="90"><output id="oRate">90</output></div>
+        <div class="slider"><label for="sDocs">Documents</label><input id="sDocs" type="range" min="50000" max="1000000" step="10000" value="360000"><output id="oDocs">360k</output></div>
+        <div style="display:flex;gap:28px;flex-wrap:wrap;margin-top:12px">
+          <div><div class="big" id="hrs">—</div><div class="small muted">hours of wall-clock time</div></div>
+          <div><div class="big" style="color:var(--dim)" id="hrs1">—</div><div class="small muted">on a single node</div></div>
+        </div>
+        <p class="small muted" style="margin-top:10px">This is simple arithmetic from the measured throughput, not a separate benchmark.</p>
+      </div>
+    </div>
+    <div class="grid g4" style="margin-top:18px">
+      <div class="card reveal"><h3>🧱 Containerised</h3><p class="small muted">A Docker image (Python 3.12, PyTorch 2.1, Transformers, spaCy 3.7) converted to Singularity, so every node runs the same environment.</p></div>
+      <div class="card reveal"><h3>🔀 Sharded</h3><p class="small muted">The master dataset is split into shards of about 1,000 documents, one SLURM job per shard, with results merged at the end.</p></div>
+      <div class="card reveal"><h3>♻️ Resumable</h3><p class="small muted">Adaptive checkpointing lets a job resume from its last record after preemption, so no work is repeated.</p></div>
+      <div class="card reveal"><h3>💾 Lean I/O</h3><p class="small muted">Text is streamed in chunks of 1,000 rows, and models and vectorisers are mounted read-only from Ceph and serialised with joblib.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PLAYGROUND ============ -->
+<section id="playground">
+  <div class="wrap">
+    <div class="eyebrow"><b>5</b> Try it</div>
+    <h2>What the feature branch sees</h2>
+    <p class="lede">Paste any review. This computes part of the stylistic feature vector in your browser, using the same formulas as my pipeline, and shows how the text would be cut into 512-token windows for DistilBERT. The transformer itself isn't run here.</p>
+    <div class="chips" style="margin:20px 0 12px">
+      <button class="chip" data-ex="spam">Example: templated spam</button>
+      <button class="chip" data-ex="good">Example: genuine review</button>
+      <button class="chip" data-ex="long">Example: long buyer's guide</button>
+    </div>
+    <div class="grid g2">
+      <div class="reveal"><textarea id="txt" aria-label="Review text"></textarea></div>
+      <div class="card reveal">
+        <div class="feat" id="feat"></div>
+        <h3 style="margin-top:18px;font-size:15px">DistilBERT input windows <span class="muted small" id="tokInfo"></span></h3>
+        <div class="chunks" id="chunks"></div>
+        <p class="small muted" style="margin-top:10px">Token count is estimated at about 1.3 WordPiece tokens per word. Texts longer than 512 tokens were split with a sliding window, and predictions were averaged across chunks.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DATA ============ -->
+<section id="data">
+  <div class="wrap">
+    <div class="eyebrow"><b>6</b> Ground truth</div>
+    <h2>A labelled dataset built from scratch</h2>
+    <p class="lede">No public dataset judged review <em>quality</em> on real search results, so I built one. I wrote a web annotation tool, refined a 10-label taxonomy through a pilot study, and had 9 annotators label 300 stratified screenshots, 3 independent labels each.</p>
+    <div class="grid g2" style="margin-top:28px">
+      <figure class="reveal"><img src="site-assets/annotation-interface.png" alt="Annotation interface: a review screenshot on the left, label choices on the right" loading="lazy"><figcaption>The custom annotation interface I built: screenshot on the left, taxonomy with ⓘ help pop-ups on the right.</figcaption></figure>
+      <div class="reveal">
+        <h3 style="margin-bottom:12px">The taxonomy <span class="small muted">· click a label</span></h3>
+        <div class="tax" id="tax"></div>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:22px">
+      <div class="card reveal">
+        <h3>Agreement across rounds</h3>
+        <svg id="alphaChart" class="chart" viewBox="0 0 520 220" role="img" aria-label="Krippendorff's alpha per annotation set"></svg>
+        <p class="small muted">Krippendorff's α per set (Set 4 = pilot). The mean is 0.84, and anything above 0.80 counts as strong agreement.</p>
+      </div>
+      <div class="card reveal">
+        <h3>Humans vs. author vs. GPT-5 vision</h3>
+        <svg id="agreeChart" class="chart" viewBox="0 0 520 220" role="img" aria-label="Agreement between annotators, author and ChatGPT"></svg>
+        <p class="small muted">Labels on the same 300 screenshots. Humans agreed with each other far more often than GPT-5 agreed with either group. The model handled clear cases well but missed many spam pages.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ AI DETECTION ============ -->
+<section id="ai">
+  <div class="wrap">
+    <div class="eyebrow"><b>7</b> Second model</div>
+    <h2>AI-text detection over 8M pages</h2>
+    <p class="lede">For authorship (human vs. GPT-4-turbo), I benchmarked six classical configurations on the PAN 2024 corpus. TF-IDF + linear SVM won, and at about 6 ms per document on CPU it could label <b style="color:var(--fg)">every page</b> in the crawl. Knowing when <em>not</em> to use a transformer is part of the job.</p>
+    <div class="ctrls"><div class="seg" id="aiSeg"><button data-m="acc" class="on">Accuracy</button><button data-m="f1">F1</button></div></div>
+    <div class="grid g2">
+      <div class="card reveal"><svg id="aiChart" class="chart" viewBox="0 0 520 280" role="img" aria-label="AI detection model comparison"></svg>
+        <p class="small muted">The x-axis is zoomed to 0.98–1.00 because all configurations are close. Validation results, thesis Table 5.1.</p></div>
+      <div class="card reveal">
+        <h3>Held-out test, SVM + TF-IDF</h3>
+        <div class="cm" style="margin-top:14px">
+          <div></div><div class="h">pred AI</div><div class="h">pred Human</div>
+          <div class="h">true AI</div><div class="cell ok">109<span>TP</span></div><div class="cell bad">0</div>
+          <div class="h">true Human</div><div class="cell bad">1</div><div class="cell ok">108<span>TN</span></div>
+        </div>
+        <p style="margin-top:14px"><b>99.5%</b> accuracy, with 1 error in 218 documents.</p>
+        <div class="tablebox"><table>
+          <thead><tr><th>Engine</th><th class="num">Pages</th><th class="num">AI-labelled</th><th class="num">Share</th></tr></thead>
+          <tbody>
+            <tr><td>Bing + DuckDuckGo</td><td class="num">6,698,686</td><td class="num">21,892</td><td class="num">0.33%</td></tr>
+            <tr><td>Startpage</td><td class="num">1,374,681</td><td class="num">5,007</td><td class="num">0.36%</td></tr>
+            <tr><td><b>Total</b></td><td class="num"><b>8,073,367</b></td><td class="num"><b>26,899</b></td><td class="num"><b>0.34%</b></td></tr>
+          </tbody></table></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINDINGS ============ -->
+<section id="findings">
+  <div class="wrap">
+    <div class="eyebrow"><b>8</b> Results over time</div>
+    <h2>What two years of search results show</h2>
+    <p class="lede">Applying both models month by month (2022–2024) gives a clear split. AI-generated text rose steadily on every engine, while spam levels depended on the engine.</p>
+    <div class="ctrls">
+      <div class="seg" id="fMetric"><button data-v="ai" class="on">AI-generated share</button><button data-v="spam">Spam-review rate</button></div>
+      <div class="seg" id="fEngine"><button data-v="bing" class="on">Bing</button><button data-v="duckduckgo">DuckDuckGo</button><button data-v="startpage">Startpage</button></div>
+    </div>
+    <div class="find">
+      <figure class="reveal"><img id="fImg" src="site-assets/ai-bing.png" alt="" loading="lazy"><figcaption id="fCap"></figcaption></figure>
+      <div class="card reveal" id="fInfo"></div>
+    </div>
+    <div class="grid g2" style="margin-top:22px">
+      <div class="card reveal">
+        <h3>Trend strength over time (Pearson r)</h3>
+        <svg id="rChart" class="chart" viewBox="0 0 520 240" role="img" aria-label="Pearson r of trend over time per engine and metric"></svg>
+        <p class="small muted">Solid dots are significant (p &lt; 0.05). Hollow dots are not.</p>
+      </div>
+      <div class="callout reveal">
+        <div class="eyebrow" style="color:var(--red)">The headline</div>
+        <div class="big">r = 0.022</div>
+        <p style="margin-top:10px">That is the correlation between a page's AI-authorship probability and its spam label, over about <b>2.95 million</b> review documents. It is statistically significant (p &lt; 0.001) but practically negligible. <b>AI-written text and spam reviews are mostly separate problems</b>, driven by different motivations, so one detector can't stand in for the other.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LIMITS / SKILLS ============ -->
+<section id="lessons">
+  <div class="wrap">
+    <div class="grid g2">
+      <div class="reveal">
+        <div class="eyebrow">Honest limits</div>
+        <h2 style="font-size:clamp(24px,3vw,34px);margin-bottom:18px">What I'd improve next</h2>
+        <ul class="check lim">
+          <li><div><b>Stage 2 reaches 63%</b><span>Good vs. spam is hard: well-written promotional text looks like genuine feedback, and 300 screenshots is a small training set.</span></div></li>
+          <li><div><b>Humans saw pixels, the model saw text</b><span>Annotators used layout, banners and ads. A multimodal model that reads the screenshot too, such as a vision-language encoder, could close that gap.</span></div></li>
+          <li><div><b>Benchmark ≠ open web</b><span>The AI detector is near-perfect on PAN 2024, but real-world generalisation needs validation on labelled web samples.</span></div></li>
+          <li><div><b>Next steps</b><span>Active learning from annotator feedback, multilingual data, and continuous monitoring as generators change.</span></div></li>
+        </ul>
+      </div>
+      <div class="reveal">
+        <div class="eyebrow">For ML engineering roles</div>
+        <h2 style="font-size:clamp(24px,3vw,34px);margin-bottom:18px">What this project shows</h2>
+        <ul class="check">
+          <li><div><b>Transformer fine-tuning in PyTorch</b><span>Custom nn.Module, the 🤗 Trainer API, AdamW, chunking past the 512-token limit, and a three-backbone comparison.</span></div></li>
+          <li><div><b>Feature engineering + deep learning</b><span>TF-IDF, spaCy POS, textstat and TextBlob features, selected by mutual information and fused late with embeddings.</span></div></li>
+          <li><div><b>Production-style inference</b><span>Docker/Singularity, SLURM sharding, checkpoint-resume, latency profiling, and about 70% less wall time.</span></div></li>
+          <li><div><b>Data work end to end</b><span>WARC parsing at 8M-page scale, stratified sampling, an annotation tool, and inter-annotator agreement.</span></div></li>
+          <li><div><b>Sound evaluation</b><span>Stratified 80/10/10 splits, per-class precision and recall, confusion matrices, and significance-tested trends.</span></div></li>
+        </ul>
+      </div>
+    </div>
+    <div class="contact reveal" id="hire">
+      <p><b>I'm open to Machine Learning Engineer and NLP roles</b>, in Munich or remote across Germany. If your team works on transformers, search or content quality, I'd be glad to talk.</p>
+      <a class="btn primary" href="https://www.linkedin.com/in/poojaprasadrn" target="_blank" rel="noopener">Connect on LinkedIn</a>
+      <a class="btn" href="https://github.com/poojaprasadrn" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CITE ============ -->
+<section id="cite">
+  <div class="wrap">
+    <div class="eyebrow">Citation</div>
+    <h2 style="margin-bottom:18px">BibTeX</h2>
+<pre class="code" id="bib"><button class="copy" data-copy="bib">copy</button>@mastersthesis{prasad2025webscale,
+  author = {Pooja Prasad},
+  title  = {A Web-Scale Analysis of Trends in AI-Generated and SEO Spam
+            Content Using Human Annotation and Machine Learning},
+  school = {Bauhaus-Universit{\"a}t Weimar, Faculty of Media},
+  type   = {Master's thesis},
+  year   = {2025},
+  month  = nov
+}</pre>
+    <p class="small muted" style="margin-top:16px">Data: Webis Affiliate-Search Crawl (Bevendorff et al., ECIR 2024) and the PAN 2024 Generative Authorship Verification corpus. Thanks to Janek Bevendorff, Prof. Dr. Benno Stein, PD Dr. Andreas Jakoby and the Webis group.</p>
+  </div>
+</section>
+
+<footer><div class="wrap">© 2025 Pooja Prasad · M.Sc. Computer Science for Digital Media, Bauhaus-Universität Weimar · Open to ML engineering roles · <a href="https://www.linkedin.com/in/poojaprasadrn" target="_blank" rel="noopener">LinkedIn</a> · <a href="#top">Back to top ↑</a></div></footer>
+
+<div class="tip" id="tip"></div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const NS="http://www.w3.org/2000/svg";
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const C={violet:'#0F4D92',cyan:'#3775BA',lime:'#8BCF8B',green:'#2f7a3b',amber:'#9A4D8E',pink:'#B64342',coral:'#B64342',blue:'#42949E',line:css('--line'),dim:css('--dim'),fg:css('--fg'),muted:css('--muted')};
+function el(tag,attrs,parent,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!==undefined)e.textContent=text;if(parent)parent.appendChild(e);return e}
+const tip=$('#tip');
+function showTip(ev,html){tip.innerHTML=html;tip.style.opacity=1;const w=tip.offsetWidth,h=tip.offsetHeight;let x=ev.clientX+14,y=ev.clientY+14;if(x+w>innerWidth-8)x=ev.clientX-w-14;if(y+h>innerHeight-8)y=ev.clientY-h-14;tip.style.left=x+'px';tip.style.top=y+'px'}
+function hideTip(){tip.style.opacity=0}
+function segment(id,cb){const s=$(id);s.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...s.children].forEach(x=>x.classList.toggle('on',x===b));cb(b.dataset)})}
+
+/* ---------- hero network animation ---------- */
+(function(){const cv=$('#net');if(!cv)return;const ctx=cv.getContext('2d');let W,H,pts=[];const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function size(){W=cv.width=cv.offsetWidth*devicePixelRatio;H=cv.height=cv.offsetHeight*devicePixelRatio;const n=Math.min(70,Math.floor(cv.offsetWidth/18));pts=Array.from({length:n},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.25*devicePixelRatio,vy:(Math.random()-.5)*.25*devicePixelRatio,c:['#0F4D92','#3775BA','#42949E','#9A4D8E'][Math.random()*4|0]}))}
+function draw(){ctx.clearRect(0,0,W,H);const d=130*devicePixelRatio;for(let i=0;i<pts.length;i++){const p=pts[i];for(let j=i+1;j<pts.length;j++){const q=pts[j],dx=p.x-q.x,dy=p.y-q.y,dd=Math.hypot(dx,dy);if(dd<d){ctx.strokeStyle=`rgba(15,77,146,${.16*(1-dd/d)})`;ctx.lineWidth=devicePixelRatio;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke()}}ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,1.8*devicePixelRatio,0,7);ctx.fill();if(!reduce){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1}}if(!reduce)requestAnimationFrame(draw)}
+size();addEventListener('resize',size);draw()})();
+
+/* ---------- nav progress + active link ---------- */
+const links=$$('#navlinks a');const secs=links.map(a=>$(a.getAttribute('href')));
+addEventListener('scroll',()=>{const h=document.documentElement;$('#progress').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';let cur=-1;secs.forEach((s,i)=>{if(s.getBoundingClientRect().top<120)cur=i});links.forEach((a,i)=>a.classList.toggle('on',i===cur))},{passive:true});
+
+/* ---------- reveal + counters ---------- */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+$$('.reveal').forEach(e=>io.observe(e));
+$$('[data-count]').forEach(e=>{const end=+e.dataset.count,suf=e.dataset.suffix||'';let t0=null;const step=t=>{if(!t0)t0=t;const k=Math.min(1,(t-t0)/1400),v=Math.round(end*(1-Math.pow(1-k,3)));e.textContent=v.toLocaleString('en-US')+(k===1?suf:'');if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)});
+
+/* ---------- copy buttons ---------- */
+$$('.copy').forEach(b=>b.addEventListener('click',()=>{const pre=$('#'+b.dataset.copy);const txt=pre.innerText.replace(/^copy\s*/,'');navigator.clipboard&&navigator.clipboard.writeText(txt).then(()=>{b.textContent='copied ✓';setTimeout(()=>b.textContent='copy',1400)})}));
+
+/* ---------- architecture explorer ---------- */
+const ARCH={
+ text:{t:'Page text',sh:['string'],d:'Main readable content pulled from WARC archives with <b>resiliparse</b>. Only HTTP 2xx text/html responses are kept, and boilerplate (menus, ads, headers) is stripped. Each text keeps its URL, crawl date and search engine for the time-series analysis.',b:['Parallelised with joblib over millions of pages','Raw HTML kept alongside the text for reproducibility']},
+ tok:{t:'DistilBertTokenizerFast',sh:['input_ids [B, 512]','attention_mask [B, 512]'],d:'WordPiece tokenisation with padding and truncation to the model\'s <b>512-token</b> limit. Long pages are split into overlapping windows with a sliding window, and the per-chunk predictions are averaged into one document score.',b:['Fast Rust tokenizer, mini-batched during inference','Same tokenizer for both stages, so tokens are computed once per page']},
+ enc:{t:'DistilBERT encoder',sh:['6 transformer layers','12 heads · 768 hidden','~66M parameters'],d:'Pre-trained <code>distilbert-base-uncased</code>, <b>fine-tuned end to end</b> on my annotated pages. Distillation keeps most of BERT-base\'s language understanding at about 40% fewer parameters and roughly 60% faster inference, which is what made a 360k-page run feasible.',b:['Compared against BERT-base and RoBERTa-base in the same hybrid setup','Chosen for the best accuracy on both stages and the lowest latency']},
+ cls:{t:'[CLS] representation',sh:['h ∈ ℝ^768'],d:'The final hidden state of the first token, <code>last_hidden_state[:, 0, :]</code>, serves as a contextual summary of the whole window. It captures semantics: what is being described, whether the text reads like first-hand experience, and its tone.',b:[]},
+ feats:{t:'Hand-crafted linguistic features',sh:['TF-IDF 1–3-grams (2,000)','8 POS counts + 8 ratios','6 text statistics'],d:'Stylistic signals that spam leaves behind:',b:['<b>TF-IDF n-grams</b> catch keyword stuffing ("best price", "buy now")','<b>spaCy POS</b> counts and ratios (VERB, NOUN, ADJ, ADV, PRON, DET, ADP, NUM); spam overuses adjectives and imperatives','<b>Readability</b>: Flesch Reading Ease and Flesch-Kincaid grade (textstat)','<b>Sentiment and subjectivity</b> (TextBlob); spam tends to extremes','<b>Length and punctuation density</b>']},
+ mi:{t:'Feature selection',sh:['~2,022 → ~2,000'],d:'<code>SelectKBest(mutual_info_classif)</code> keeps the features that carry the most information about the label, which removes redundant n-grams and keeps the head small enough for a 300-example dataset.',b:['Fit on the training split only, to avoid leakage','Serialised with joblib next to the model for inference']},
+ scale:{t:'StandardScaler',sh:['x̂ ∈ ℝ^k'],d:'Puts the feature branch on a similar scale to the transformer activations so neither branch dominates the linear head. <code>with_mean=False</code> keeps sparse TF-IDF matrices sparse.',b:[]},
+ cat:{t:'Late fusion',sh:['z = [h ; x̂] ∈ ℝ^(768+k)'],d:'<code>torch.cat((h, x̂), dim=1)</code>. The head sees meaning and style side by side, so it can learn, for example, that "positive, fluent and very simple, with many superlatives" points to spam even when the semantics look harmless.',b:[]},
+ drop:{t:'Dropout',sh:['p = 0.3'],d:'Strong regularisation for a small labelled set, applied to the fused vector before the classifier.',b:[]},
+ lin:{t:'Classification head',sh:['W ∈ ℝ^(2 × (768+k))','→ 2 logits'],d:'A single linear layer. Two separately trained heads give the two stages: <b>review vs. non-review</b>, then <b>good vs. spam</b>.',b:['argmax over the logits; stage 2 runs only when stage 1 predicts "review"']},
+ train:{t:'Fine-tuning setup',sh:['cross-entropy','AdamW','80 / 10 / 10 stratified'],d:'Trained with the Hugging Face <b>Trainer API</b> using cross-entropy loss and the <b>AdamW</b> optimiser. The 80/10/10 split is stratified to keep class balance, and model selection uses the validation split.',b:['Pre-processing: lower-casing, punctuation normalisation, HTML removal, spaCy tokenisation','Artefacts (model, TF-IDF, selector, scaler, feature_dim) saved together for reproducible inference']}
+};
+function showArch(k){$$('#flow .blk').forEach(b=>b.classList.toggle('on',b.dataset.k===k));const a=ARCH[k];
+ $('#detail').innerHTML=`<div class="eyebrow" style="margin-bottom:8px">Block</div><h3>${a.t}</h3><div style="margin:8px 0 12px">${a.sh.map(s=>`<span class="shape">${s}</span>`).join('')}</div><p class="muted" style="margin:0">${a.d}</p>${a.b.length?`<ul>${a.b.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}`}
+$('#flow').addEventListener('click',e=>{const b=e.target.closest('.blk');if(b)showArch(b.dataset.k)});
+showArch('enc');
+
+/* ---------- backbones ---------- */
+const BB=[
+ {n:'BERT-base',s1:.74,s2:.55,p:'~110M',l:12,note:'The original encoder. Solid contextual understanding, but it was the weakest on stage 2 here and roughly twice DistilBERT\'s inference cost.'},
+ {n:'DistilBERT',s1:.78,s2:.63,p:'~66M',l:6,note:'<b>Selected for deployment.</b> Best on both stages, and the lightest and fastest, which is the combination you want for a 360,000-page batch job.'},
+ {n:'RoBERTa-base',s1:.72,s2:.59,p:'~125M',l:12,note:'Trained on more data with dynamic masking. It reached slightly higher recall in places, but cost more memory and training time without beating DistilBERT on accuracy.'}];
+let bbSel=1;
+function drawBB(){const s=$('#bbChart');s.innerHTML='';const W=520,H=300,m={l:40,r:12,t:22,b:46},iw=W-m.l-m.r,ih=H-m.t-m.b;
+ [0,.2,.4,.6,.8,1].forEach(v=>{const y=m.t+ih*(1-v);el('line',{x1:m.l,x2:W-m.r,y1:y,y2:y,stroke:C.line,'stroke-width':v===0?1.2:.6},s);el('text',{x:m.l-8,y:y+4,'text-anchor':'end','font-size':11},s,v.toFixed(1))});
+ const gw=iw/3,bw=gw*.28;
+ BB.forEach((b,i)=>{const gx=m.l+gw*i+gw/2;const on=i===bbSel;
+  [['s1',C.violet,'Stage 1'],['s2',C.cyan,'Stage 2']].forEach(([k,col,lab],j)=>{const v=b[k],x=gx+(j?4:-bw-4),y=m.t+ih*(1-v);
+   const r=el('rect',{x,y:m.t+ih,width:bw,height:0,rx:6,fill:col,opacity:on?1:.35},s);
+   requestAnimationFrame(()=>{r.style.transition='all .6s cubic-bezier(.2,.8,.2,1)';r.setAttribute('y',y);r.setAttribute('height',ih*v)});
+   el('text',{x:x+bw/2,y:y-6,'text-anchor':'middle','font-size':12,'font-weight':700,fill:on?C.fg:C.dim},s,v.toFixed(2));
+   r.addEventListener('mousemove',e=>showTip(e,`<b>${b.n}</b><br>${lab}: accuracy ${v.toFixed(2)}`));r.addEventListener('mouseleave',hideTip)});
+  el('text',{x:gx,y:H-20,'text-anchor':'middle','font-size':13,'font-weight':on?700:500,fill:on?C.fg:C.muted},s,b.n)});
+ const lg=el('g',{transform:`translate(${m.l},8)`},s);el('rect',{width:10,height:10,rx:2,fill:C.violet},lg);el('text',{x:15,y:9,'font-size':11.5},lg,'Stage 1 · review detection');el('rect',{x:190,width:10,height:10,rx:2,fill:C.cyan},lg);el('text',{x:205,y:9,'font-size':11.5},lg,'Stage 2 · good vs. spam');
+ const b=BB[bbSel];$('#bbInfo').innerHTML=`<div class="eyebrow" style="margin-bottom:6px">${bbSel===1?'★ Chosen backbone':'Backbone'}</div><h3 style="font-size:24px">${b.n}</h3>
+ <div class="metric-row"><div class="metric"><div class="v" style="color:var(--blue)">${b.s1.toFixed(2)}</div><div class="l">Stage 1 acc.</div></div><div class="metric"><div class="v" style="color:var(--blue2)">${b.s2.toFixed(2)}</div><div class="l">Stage 2 acc.</div></div><div class="metric"><div class="v">${b.l}</div><div class="l">layers · ${b.p} params</div></div></div>
+ <p class="muted" style="margin-top:14px">${b.note}</p>`}
+segment('#bbSeg',d=>{bbSel=+d.b;drawBB()});drawBB();
+
+/* ---------- cascade confusion matrices ---------- */
+const ST={
+ 1:{neg:'Non-review',pos:'Review',m:[[21,7],[6,26]],dist:'58% review · 42% other',acc:.78,
+   txt:`<h3>Stage 1 · Is this page a review?</h3><p class="muted">Separates genuine review pages from shops, buyer's guides, news and forums. Balanced errors in both directions mean the filter doesn't systematically drop reviews before stage 2.</p><div class="rbadge sig"><b>0.78</b><span class="small muted">accuracy</span></div><div class="rbadge sig"><b>0.80</b><span class="small muted">F1 (review)</span></div><p class="small muted" style="margin-top:12px">Class mix in the annotated data: 58% review, 42% other.</p>`},
+ 2:{neg:'Good',pos:'Spam',m:[[8,7],[4,11]],dist:'33% good · 25% spam',acc:.63,
+   txt:`<h3>Stage 2 · Good review or spam?</h3><p class="muted">The hard part. The model leans towards flagging spam, with recall 0.73 on spam vs. 0.53 on good reviews. That is a cautious bias that suits a monitoring tool: missing spam costs more than double-checking a genuine review.</p><div class="rbadge ns"><b>0.63</b><span class="small muted">accuracy</span></div><div class="rbadge sig"><b>0.73</b><span class="small muted">spam recall</span></div><p class="small muted" style="margin-top:12px">Errors cluster where promotional text is fluent and has moderate sentiment, close to authentic feedback.</p>`}};
+let stSel=1;
+function drawCM(){const S=ST[stSel],[[tn,fp],[fn,tp]]=S.m;
+ const cm=$('#cm');cm.innerHTML=`<div></div><div class="h">pred ${S.neg}</div><div class="h">pred ${S.pos}</div>
+ <div class="h">true ${S.neg}</div><div class="cell ok" data-c="tn">${tn}<span>TN</span></div><div class="cell bad" data-c="fp">${fp}<span>FP</span></div>
+ <div class="h">true ${S.pos}</div><div class="cell bad" data-c="fn">${fn}<span>FN</span></div><div class="cell ok" data-c="tp">${tp}<span>TP</span></div>`;
+ const P=tp/(tp+fp),R=tp/(tp+fn),F=2*P*R/(P+R);
+ const mets=[['Precision',P,`TP / (TP + FP) = ${tp}/${tp+fp}`,'tp fp'],['Recall',R,`TP / (TP + FN) = ${tp}/${tp+fn}`,'tp fn'],['F1',F,'2PR / (P + R)','tp fp fn']];
+ $('#cmMetrics').innerHTML=mets.map(([l,v,f,c])=>`<div class="metric" data-cells="${c}"><div class="v">${v.toFixed(2)}</div><div class="l">${l} (${S.pos.toLowerCase()})</div><div class="f">${f}</div></div>`).join('');
+ $$('#cmMetrics .metric').forEach(m=>{m.addEventListener('mouseenter',()=>m.dataset.cells.split(' ').forEach(c=>$(`#cm [data-c=${c}]`).classList.add('hot')));m.addEventListener('mouseleave',()=>$$('#cm .cell').forEach(c=>c.classList.remove('hot')))});
+ $('#stInfo').innerHTML=S.txt}
+segment('#stSeg',d=>{stSel=+d.s;drawCM()});drawCM();
+
+/* ---------- latency + throughput ---------- */
+(function(){const s=$('#latChart'),W=520,m={l:120,r:60,t:10};const rows=[['Stage 1 · review?',538,C.violet],['Stage 2 · spam?',494,C.cyan],['Average total',735,C.lime]];const max=900,iw=W-m.l-m.r;
+ rows.forEach(([l,v,c],i)=>{const y=m.t+i*62;el('text',{x:0,y:y+22,'font-size':13,fill:C.fg},s,l);el('rect',{x:m.l,y:y+6,width:iw,height:24,rx:7,fill:'#f6f8fb',stroke:C.line},s);const r=el('rect',{x:m.l,y:y+6,width:0,height:24,rx:7,fill:c},s);el('text',{x:m.l+iw*v/max+8,y:y+23,'font-size':13,'font-weight':700,fill:C.fg},s,v+' ms');
+ const obs=new IntersectionObserver(e=>{if(e[0].isIntersecting){r.style.transition='width 1s cubic-bezier(.2,.8,.2,1)';r.setAttribute('width',iw*v/max);obs.disconnect()}});obs.observe(s)});
+ el('text',{x:m.l,y:205,'font-size':11,fill:C.dim},s,'ms per document (CPU-side feature extraction included)')})();
+function thr(){const n=+$('#sNodes').value,r=+$('#sRate').value,d=+$('#sDocs').value;$('#oNodes').textContent=n;$('#oRate').textContent=r;$('#oDocs').textContent=(d/1000)+'k';
+ $('#hrs').textContent=(d/(n*r)/60).toFixed(1);$('#hrs1').textContent=(d/r/60).toFixed(1)}
+['#sNodes','#sRate','#sDocs'].forEach(i=>$(i).addEventListener('input',thr));thr();
+
+/* ---------- playground ---------- */
+const EX={
+ spam:"BEST Air Fryer 2024!!! Top 10 best air fryers you can buy now. Amazing price, amazing quality, amazing design! Buy now and save big! This is the best air fryer for every kitchen. Check price on Amazon! Best value! Top pick! You will love it!!!",
+ good:"I've used this air fryer most evenings for about three months. It handles frozen fries well in 14 minutes, but chicken thighs need a shake halfway or the top browns unevenly. The basket coating started to scratch after week six, even though I only used the silicone tongs. It's quieter than my old Philips, although the fan noise is still noticeable during calls. For a two-person household it's worth it, but I'd skip it if you regularly cook for four.",
+ long:null};
+EX.long=Array.from({length:9},(_,i)=>`Section ${i+1}. When choosing a robot vacuum, consider suction power, battery life, mapping quality and how well it handles rugs and pet hair. Models with LiDAR navigation usually clean in neat lines and avoid obstacles better than camera-only models, while self-emptying docks save effort but add cost and noise. We compared runtime, filter design, app features and replacement-part prices across several brands, and we explain which trade-offs matter most for small flats, large homes and households with pets or allergies.`).join(' ');
+function syll(w){w=w.toLowerCase().replace(/[^a-z]/g,'');if(!w)return 0;if(w.length<=3)return 1;w=w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/,'').replace(/^y/,'');const m=w.match(/[aeiouy]{1,2}/g);return Math.max(1,m?m.length:1)}
+function analyse(){const t=$('#txt').value;const words=t.split(/\s+/).filter(Boolean),nw=Math.max(words.length,1);
+ const punct=[...t].filter(c=>'!?.,;:'.includes(c)).length/nw;const sents=Math.max(1,(t.match(/[.!?]+(\s|$)/g)||[]).length);
+ const syl=words.reduce((a,w)=>a+syll(w),0);const fre=words.length?206.835-1.015*(words.length/sents)-84.6*(syl/nw):0;const fk=words.length?0.39*(words.length/sents)+11.8*(syl/nw)-15.59:0;
+ const excl=(t.match(/!/g)||[]).length;const caps=words.filter(w=>w.length>2&&w===w.toUpperCase()&&/[A-Z]/.test(w)).length;
+ const tri={};let maxRep=0;const lw=words.map(w=>w.toLowerCase().replace(/[^a-z0-9']/g,''));for(let i=0;i+1<lw.length;i++){const g=lw[i]+' '+lw[i+1];tri[g]=(tri[g]||0)+1;maxRep=Math.max(maxRep,tri[g])}
+ const F=[['Tokens (words)',words.length,'length'],['Punct. density',punct.toFixed(2),'!?.,;: per word'],['Flesch ease',fre.toFixed(0),'higher = simpler'],['FK grade',fk.toFixed(1),'school grade'],['Sentences',sents,''],['“!” count',excl,'spam signal'],['ALL-CAPS words',caps,'shouting'],['Top bigram repeats',maxRep,'template signal']];
+ $('#feat').innerHTML=F.map(([l,v,s])=>`<div class="metric"><div class="v">${v}</div><div class="l">${l}</div><div class="f">${s}</div></div>`).join('');
+ const toks=Math.round(words.length*1.3);const n=Math.max(1,Math.ceil(toks/512));$('#tokInfo').textContent=`· ≈${toks} tokens → ${n} window${n>1?'s':''}`;
+ $('#chunks').innerHTML=Array.from({length:n},(_,i)=>{const full=i<n-1||toks%512===0;return `<i class="${full?'':'part'}">${i===n-1&&!full?toks%512:512}</i>`}).join('')}
+$$('[data-ex]').forEach(b=>b.addEventListener('click',()=>{$('#txt').value=EX[b.dataset.ex];analyse()}));
+$('#txt').addEventListener('input',analyse);$('#txt').value=EX.spam;analyse();
+
+/* ---------- taxonomy ---------- */
+const TAX=[
+ ['Review',C.green,[['Great review','Detailed information based on real use or testing: original photos, clear comparisons and references.'],['Decent review','Organised, clear descriptions, but no first-hand testing or expert judgement.'],['Poor review','Thin, repetitive content, often rewritten from product listings.'],['Spam review','Generated or copied text built around keywords rather than meaning, made for search visibility.']]],
+ ['Not a review',C.amber,[['Webshop','Pages where you can buy the product: prices, "Add to cart".'],['Buyer\'s guide','General advice ("Top 10", "Buying tips") without reviewing specific items.'],['Other','Forums, blogs, news and anything else.']]],
+ ['Broken screenshot',C.coral,[['Ad or banner overlay','Main content hidden behind pop-ups or banners.'],['Error page','An error message instead of content.'],['Broken layout','Missing scripts, images or styling.']]]];
+$('#tax').innerHTML=TAX.map(([h,c,ls])=>`<div><h4 style="color:${c}">${h}</h4>${ls.map(([l,d])=>`<button class="lbl">${l}<small>${d}</small></button>`).join('')}</div>`).join('');
+$('#tax').addEventListener('click',e=>{const b=e.target.closest('.lbl');if(b)b.classList.toggle('on')});
+$$('#tax .lbl')[3].classList.add('on');
+
+/* ---------- alpha chart ---------- */
+(function(){const s=$('#alphaChart'),W=520,H=220,m={l:36,r:10,t:16,b:34},iw=W-m.l-m.r,ih=H-m.t-m.b;const lo=.7,hi=.95;const d=[['Set 1',.80],['Set 2',.85],['Set 3',.89],['Set 4 (pilot)',.81]];const y=v=>m.t+ih*(1-(v-lo)/(hi-lo));
+ [.7,.75,.8,.85,.9,.95].forEach(v=>{el('line',{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:C.line,'stroke-width':.6},s);el('text',{x:m.l-6,y:y(v)+4,'text-anchor':'end','font-size':11},s,v.toFixed(2))});
+ el('line',{x1:m.l,x2:W-m.r,y1:y(.8),y2:y(.8),stroke:C.amber,'stroke-dasharray':'5 4'},s);el('text',{x:W-m.r,y:y(.8)-6,'text-anchor':'end','font-size':11,fill:C.amber},s,'strong-agreement threshold 0.80');
+ el('line',{x1:m.l,x2:W-m.r,y1:y(.84),y2:y(.84),stroke:C.lime,'stroke-dasharray':'2 3'},s);el('text',{x:m.l+4,y:y(.84)-6,'font-size':11,fill:C.green},s,'mean 0.84');
+ const gw=iw/d.length;d.forEach(([l,v],i)=>{const x=m.l+gw*i+gw*.22,w=gw*.56;const r=el('rect',{x,y:y(v),width:w,height:m.t+ih-y(v),rx:6,fill:i===3?C.dim:C.violet},s);el('text',{x:x+w/2,y:y(v)-6,'text-anchor':'middle','font-size':12,'font-weight':700,fill:C.fg},s,v.toFixed(2));el('text',{x:x+w/2,y:H-12,'text-anchor':'middle','font-size':12},s,l);r.addEventListener('mousemove',e=>showTip(e,`<b>${l}</b><br>Krippendorff's α = ${v}`));r.addEventListener('mouseleave',hideTip)});
+ el('text',{x:m.l,y:H-0,'font-size':10,fill:C.dim},s,'(axis starts at 0.70)')})();
+
+/* ---------- agreement chart ---------- */
+(function(){const s=$('#agreeChart'),W=520,m={l:140,r:10,t:8};const iw=W-m.l-m.r;const d=[['Users vs. author',163,137],['ChatGPT vs. users',85,215],['ChatGPT vs. author',89,211]];
+ d.forEach(([l,a,b],i)=>{const y=m.t+i*52;el('text',{x:0,y:y+21,'font-size':13,fill:C.fg},s,l);const wa=iw*a/300;const ra=el('rect',{x:m.l,y:y+4,width:wa,height:26,rx:6,fill:C.lime},s);const rb=el('rect',{x:m.l+wa+2,y:y+4,width:iw-wa-2,height:26,rx:6,fill:'#F6CFCB'},s);
+  el('text',{x:m.l+8,y:y+22,'font-size':12,'font-weight':700,fill:'#1c4d24'},s,`${a} agree`);el('text',{x:W-m.r-8,y:y+22,'text-anchor':'end','font-size':12,fill:C.fg},s,`${b} differ`);
+  [ra,rb].forEach(r=>{r.addEventListener('mousemove',e=>showTip(e,`<b>${l}</b><br>${a} of 300 identical labels (${Math.round(a/3)}%)`));r.addEventListener('mouseleave',hideTip)})});
+ const y=m.t+3*52+6;el('text',{x:0,y:y+14,'font-size':12,fill:C.muted},s,'All three:');const segs=[[59,'all same',C.lime],[160,'two agree','#AACBE8'],[81,'all differ','#E9A6A1']];let x=m.l;segs.forEach(([v,l,c])=>{const w=iw*v/300;el('rect',{x,y,width:w-2,height:20,rx:5,fill:c,opacity:.85},s);el('text',{x:x+6,y:y+14,'font-size':11,'font-weight':700,fill:'#16202e'},s,`${v} ${w>90?l:''}`);x+=w})})();
+
+/* ---------- AI model comparison ---------- */
+const AIM=[['SVM + TF-IDF',.997,.997],['LogReg + TF',.993,.993],['LogReg + TF-IDF',.990,.990],['NB + TF',.990,.990],['NB + TF-IDF',.988,.988],['SVM + TF',.986,.986]];let aiM='acc';
+function drawAI(){const s=$('#aiChart');s.innerHTML='';const W=520,m={l:122,r:50,t:8},iw=W-m.l-m.r,lo=.98,hi=1;const k=aiM==='acc'?1:2;
+ [.98,.985,.99,.995,1].forEach(v=>{const x=m.l+iw*(v-lo)/(hi-lo);el('line',{x1:x,x2:x,y1:m.t,y2:m.t+6*42,stroke:C.line,'stroke-width':.6},s);el('text',{x,y:m.t+6*42+16,'text-anchor':'middle','font-size':11},s,v.toFixed(3))});
+ AIM.forEach((r,i)=>{const y=m.t+i*42,v=r[k],best=i===0;el('text',{x:m.l-10,y:y+22,'text-anchor':'end','font-size':13,fill:best?C.fg:C.muted,'font-weight':best?700:500},s,r[0]);const b=el('rect',{x:m.l,y:y+8,width:0,height:22,rx:6,fill:best?'url(#g1)':C.violet,opacity:best?1:.55},s);requestAnimationFrame(()=>{b.style.transition='width .7s cubic-bezier(.2,.8,.2,1)';b.setAttribute('width',iw*(v-lo)/(hi-lo))});el('text',{x:m.l+iw*(v-lo)/(hi-lo)+6,y:y+24,'font-size':12,'font-weight':700,fill:C.fg},s,v.toFixed(3));b.addEventListener('mousemove',e=>showTip(e,`<b>${r[0]}</b><br>${aiM==='acc'?'Accuracy':'F1'}: ${v}`));b.addEventListener('mouseleave',hideTip)});
+ const defs=el('defs',{},s),g=el('linearGradient',{id:'g1'},defs);el('stop',{offset:0,'stop-color':C.violet},g);el('stop',{offset:1,'stop-color':C.cyan},g)}
+segment('#aiSeg',d=>{aiM=d.m;drawAI()});drawAI();
+
+/* ---------- findings ---------- */
+const FD={
+ ai:{bing:{r:.956,p:'p ≈ 0',sig:1,t:'Earliest and strongest growth. AI-labelled URLs rose from about 500/month (Nov 2023) to 1,750–1,850 (Mar–Jul 2024). The share peaked around 1.0–1.1%, roughly double the year before.',cap:'Fig. 5.2 · Bing: human (blue) vs. AI (red) URLs per month, with AI attribution rate'},
+  duckduckgo:{r:.940,p:'p ≈ 0',sig:1,t:'A gradual, steady rise from about 0.25% (Feb 2023) to a peak of about 0.5% (Jan 2024). It stayed below 1% throughout, but the trend is very consistent.',cap:'Fig. 5.1 · DuckDuckGo: human vs. AI URLs per month, with AI attribution rate'},
+  startpage:{r:.903,p:'p ≈ 0',sig:1,t:'A slower start, then a rise from mid-2023 to about 0.8%, followed by a slight dip in late 2024. Human pages remain the clear majority.',cap:'Fig. 5.3 · Startpage: human vs. AI URLs per month, with AI attribution rate'}},
+ spam:{bing:{r:.375,p:'p = 0.103',sig:0,t:'Spam rose from under 30% to nearly 40% around early 2023 (ChatGPT, Bing Chat), then stayed around 45–50%. There is no significant long-term linear trend.',cap:'Fig. 5.6 · Bing: good vs. spam review URLs per month, with spam rate'},
+  duckduckgo:{r:.049,p:'p = 0.838',sig:0,t:'Month-to-month noise, but flat overall at about 45–47% spam among review pages. There is no meaningful trend.',cap:'Fig. 5.5 · DuckDuckGo: good vs. spam review URLs per month, with spam rate'},
+  startpage:{r:.659,p:'p = 0.008',sig:1,t:'The only significant spam trend. Spam outnumbered good reviews throughout (55–68%) and climbed slowly to about 68% by mid-2024.',cap:'Fig. 5.7 · Startpage: good vs. spam review URLs per month, with spam rate'}}};
+let fM='ai',fE='bing';const EN={bing:'Bing',duckduckgo:'DuckDuckGo',startpage:'Startpage'};
+function drawF(){const d=FD[fM][fE];const img=$('#fImg');img.src=`site-assets/${fM}-${fE}.png`;img.alt=d.cap;$('#fCap').textContent=d.cap+' (from the thesis).';
+ $('#fInfo').innerHTML=`<div class="eyebrow" style="margin-bottom:6px">${fM==='ai'?'AI-generated share':'Spam-review rate'} · ${EN[fE]}</div><div class="rbadge ${d.sig?'sig':'ns'}"><b>r = ${d.r.toFixed(3)}</b><span class="small muted">${d.p}</span></div><p class="muted" style="margin-top:14px">${d.t}</p><p class="small" style="color:${d.sig?C.green:'#6b6b6b'}">${d.sig?'● Statistically significant trend over time':'○ No significant linear trend'}</p>`;drawR()}
+segment('#fMetric',d=>{fM=d.v;drawF()});segment('#fEngine',d=>{fE=d.v;drawF()});
+function drawR(){const s=$('#rChart');s.innerHTML='';const W=520,H=240,m={l:110,r:20,t:26,b:30},iw=W-m.l-m.r;const x=v=>m.l+iw*v;
+ [0,.25,.5,.75,1].forEach(v=>{el('line',{x1:x(v),x2:x(v),y1:m.t-6,y2:H-m.b,stroke:C.line,'stroke-width':.6},s);el('text',{x:x(v),y:H-m.b+16,'text-anchor':'middle','font-size':11},s,v)});
+ el('text',{x:m.l,y:12,'font-size':11.5},s,'Pearson r vs. time');
+ const eng=['bing','duckduckgo','startpage'];eng.forEach((e,i)=>{const y=m.t+18+i*58;el('text',{x:m.l-12,y:y+4,'text-anchor':'end','font-size':13,fill:C.fg,'font-weight':e===fE?700:500},s,EN[e]);el('line',{x1:x(Math.min(FD.ai[e].r,FD.spam[e].r)),x2:x(Math.max(FD.ai[e].r,FD.spam[e].r)),y1:y,y2:y,stroke:C.line,'stroke-width':2},s);
+  [['ai',C.cyan],['spam',C.pink]].forEach(([k,c])=>{const d=FD[k][e],on=k===fM&&e===fE;const ci=el('circle',{cx:x(d.r),cy:y,r:on?10:7,fill:d.sig?c:'#ffffff',stroke:c,'stroke-width':2.5,style:'cursor:pointer'},s);if(on)el('circle',{cx:x(d.r),cy:y,r:15,fill:'none',stroke:c,'stroke-opacity':.4},s);
+   ci.addEventListener('mousemove',ev=>showTip(ev,`<b>${EN[e]} · ${k==='ai'?'AI share':'spam rate'}</b><br>r = ${d.r} · ${d.p}`));ci.addEventListener('mouseleave',hideTip);ci.addEventListener('click',()=>{fM=k;fE=e;$$('#fMetric button').forEach(b=>b.classList.toggle('on',b.dataset.v===k));$$('#fEngine button').forEach(b=>b.classList.toggle('on',b.dataset.v===e));drawF()})})});
+ const lg=el('g',{transform:`translate(${W-230},6)`},s);el('circle',{cx:5,cy:5,r:5,fill:C.cyan},lg);el('text',{x:14,y:9,'font-size':11.5},lg,'AI share');el('circle',{cx:95,cy:5,r:5,fill:C.pink},lg);el('text',{x:104,y:9,'font-size':11.5},lg,'Spam rate')}
+drawF();
+})();
+</script>
+</body>
+</html>
