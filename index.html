@@ -199,6 +199,39 @@ footer{padding:36px 0 56px;color:var(--dim);font-size:13.5px;border-top:1px soli
 .reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
 .reveal.in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
+
+/* Ask the thesis (RAG) */
+.rag{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;margin-top:30px;align-items:start}
+@media (max-width:900px){.rag{grid-template-columns:1fr}}
+.rag-form{display:flex;gap:8px}
+.rag-form input{flex:1;min-width:0;font:15px Inter,sans-serif;padding:11px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--fg)}
+.rag-form input:focus{outline:2px solid var(--blue2);outline-offset:1px}
+.rag-answer{margin-top:18px;padding:18px;border-radius:12px;background:var(--bg2);border:1px solid var(--line);min-height:110px}
+.rag-answer.ok{background:#f2f7fd;border-color:#cddcee}
+.rag-answer.no{background:#f3f3f3;border-color:var(--neutral)}
+.rag-answer .a{font-size:15.5px;line-height:1.6;color:var(--fg);margin:0}
+.rag-answer .src{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
+.pg{font:600 12px var(--mono);padding:3px 8px;border-radius:6px;background:#fff;border:1px solid #cddcee;color:var(--blue)}
+.pg:hover{text-decoration:none;border-color:var(--blue)}
+.rag-trace{display:grid;gap:10px;margin-top:12px}
+.step{display:grid;grid-template-columns:92px minmax(0,1fr);gap:12px;align-items:start;padding:12px;border:1px solid var(--line);border-radius:11px;background:#fff}
+.step .nm{font:600 12px var(--mono);color:var(--blue);text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
+.step .nm small{display:block;color:var(--dim);font-weight:500;text-transform:none;letter-spacing:0}
+.step code{font-family:var(--mono);font-size:13px;background:var(--bg2);padding:2px 6px;border-radius:5px}
+.hit{display:grid;grid-template-columns:52px 1fr 64px;gap:10px;align-items:center;padding:6px 0;border-top:1px dashed var(--line);cursor:pointer}
+.hit:first-child{border-top:0}
+.hit .p{font:600 12px var(--mono);color:var(--dim)}
+.hit .bar{height:10px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);position:relative;overflow:visible}
+.hit .bar i{position:absolute;inset:0 auto 0 0;border-radius:999px;background:var(--blue2)}
+.hit .bar i.low{background:var(--neutral)}
+.hit .bar b{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--red)}
+.hit .s{font:600 12.5px var(--mono);text-align:right}
+.hit .txt{grid-column:1/-1;display:none;font-size:13.5px;color:var(--muted);line-height:1.55;background:var(--bg2);border-radius:8px;padding:10px 12px}
+.hit.show .txt{display:block}
+.hit mark{background:#fff3b0;color:inherit;border-radius:3px;padding:0 1px}
+.verdict{display:inline-block;font:600 12.5px var(--mono);padding:3px 9px;border-radius:6px}
+.verdict.y{background:var(--green1);color:var(--green-ink);border:1px solid var(--green2)}
+.verdict.n{background:var(--red1);color:var(--red);border:1px solid var(--red2)}
 </style>
 </head>
 <body>
@@ -215,6 +248,7 @@ footer{padding:36px 0 56px;color:var(--dim);font-size:13.5px;border-top:1px soli
       <a href="#data">Data</a>
       <a href="#ai">AI detection</a>
       <a href="#findings">Findings</a>
+      <a href="#ask">Ask</a>
       <a href="#cite">Cite</a>
     </div>
     <a class="open" href="#hire" title="Open to ML engineering roles"><i></i>Open to work</a>
@@ -240,6 +274,7 @@ footer{padding:36px 0 56px;color:var(--dim);font-size:13.5px;border-top:1px soli
       <a class="btn primary" href="#transformer">Explore the transformer ↓</a>
       <a class="btn" href="Report.pdf" target="_blank" rel="noopener">📄 Thesis PDF</a>
       <a class="btn" href="Slides.pdf" target="_blank" rel="noopener">🎞 Slides</a>
+      <a class="btn" href="#ask">💬 Ask my thesis</a>
       <a class="btn" href="#cite">📝 BibTeX</a>
     </div>
     <div class="kpis">
@@ -517,6 +552,50 @@ footer{padding:36px 0 56px;color:var(--dim);font-size:13.5px;border-top:1px soli
   </div>
 </section>
 
+<!-- ============ ASK THE THESIS (RAG) ============ -->
+<section id="ask">
+  <div class="wrap">
+    <div class="eyebrow"><b>9</b> Follow-up project</div>
+    <h2>Ask my thesis: <span class="grad-text">RAG with LangGraph</span></h2>
+    <p class="lede">A second project built on the same research: retrieval-augmented question answering over the thesis, orchestrated as a LangGraph state graph. The graph below is the real workflow, and it <b style="color:var(--fg)">runs live in your browser</b>. Ask a question and watch each node fire.</p>
+
+    <div class="rag">
+      <div class="card reveal">
+        <form id="ragForm" class="rag-form" autocomplete="off">
+          <input id="ragQ" type="text" placeholder="e.g. What was the inter-annotator agreement?" aria-label="Question about the thesis">
+          <button class="btn primary" type="submit">Ask</button>
+        </form>
+        <div class="chips" style="margin-top:12px" id="ragChips">
+          <button class="chip" type="button">What was the inter-annotator agreement?</button>
+          <button class="chip" type="button">Which transformer model performed best?</button>
+          <button class="chip" type="button">What is the correlation between AI content and spam?</button>
+          <button class="chip" type="button">How was the spam model deployed on the cluster?</button>
+          <button class="chip" type="button">Recipe for pancakes?</button>
+        </div>
+        <div id="ragAnswer" class="rag-answer" aria-live="polite"><p class="muted small" style="margin:0">Answers come only from the thesis text and cite the PDF pages they came from.</p></div>
+      </div>
+      <div class="card reveal">
+        <svg id="ragGraph" class="chart" viewBox="0 0 520 330" role="img" aria-label="LangGraph workflow: rewrite, retrieve, grade, then generate, retry or clarify"></svg>
+        <p class="small muted" style="margin:4px 0 0">If grading fails, the graph retries once with the original wording, then asks for clarification instead of guessing.</p>
+      </div>
+    </div>
+
+    <div class="card reveal" style="margin-top:18px">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline">
+        <h3>Trace</h3><span class="small muted" id="ragMeta"></span>
+      </div>
+      <div id="ragTrace" class="rag-trace"><p class="muted small">Run a question to see the rewritten query, the top-6 retrieved passages with their TF-IDF scores, and the grading decision.</p></div>
+    </div>
+
+    <div class="grid g3" style="margin-top:18px">
+      <div class="card reveal"><h3>📚 Ingest</h3><p class="small muted">The PDF is split into 120-word chunks with a 30-word overlap, each tagged with its page number, then indexed with TF-IDF (1–2-grams, sublinear tf). It runs fully offline.</p></div>
+      <div class="card reveal"><h3>🧭 Route</h3><p class="small muted">A LangGraph <code>StateGraph</code> with a conditional edge after grading: generate, rewrite once more, or clarify. The relevance threshold is 0.08 cosine similarity.</p></div>
+      <div class="card reveal"><h3>✍️ Generate</h3><p class="small muted">In the Python app, an LLM (Claude, via the Anthropic API) answers <em>only</em> from the retrieved context and cites pages. Here, the app's built-in extractive generator runs, so no API key is needed.</p></div>
+    </div>
+    <p class="small muted" style="margin-top:14px">Code: <a href="https://github.com/poojaprasadrn/thesis-rag" target="_blank" rel="noopener">github.com/poojaprasadrn/thesis-rag</a> · The browser version reuses the app's index and logic, and returns the same queries, top passages and answers as the Python app on its test questions. Retrieval is lexical, so the next step is swapping in sentence embeddings and measuring answer quality.</p>
+  </div>
+</section>
+
 <!-- ============ LIMITS / SKILLS ============ -->
 <section id="lessons">
   <div class="wrap">
@@ -539,6 +618,7 @@ footer{padding:36px 0 56px;color:var(--dim);font-size:13.5px;border-top:1px soli
           <li><div><b>Feature engineering + deep learning</b><span>TF-IDF, spaCy POS, textstat and TextBlob features, selected by mutual information and fused late with embeddings.</span></div></li>
           <li><div><b>Production-style inference</b><span>Docker/Singularity, SLURM sharding, checkpoint-resume, latency profiling, and about 70% less wall time.</span></div></li>
           <li><div><b>Data work end to end</b><span>WARC parsing at 8M-page scale, stratified sampling, an annotation tool, and inter-annotator agreement.</span></div></li>
+          <li><div><b>RAG and agentic workflows</b><span>A LangGraph state graph with query rewriting, retrieval grading, retry and clarify routes, plus tests on the retrieval logic.</span></div></li>
           <li><div><b>Sound evaluation</b><span>Stratified 80/10/10 splits, per-class precision and recall, confusion matrices, and significance-tested trends.</span></div></li>
         </ul>
       </div>
@@ -573,6 +653,8 @@ footer{padding:36px 0 56px;color:var(--dim);font-size:13.5px;border-top:1px soli
 
 <div class="tip" id="tip"></div>
 
+<script src="site-assets/rag-index.js"></script>
+<script src="site-assets/rag.js"></script>
 <script>
 (function(){
 "use strict";
@@ -743,6 +825,57 @@ function drawR(){const s=$('#rChart');s.innerHTML='';const W=520,H=240,m={l:110,
    ci.addEventListener('mousemove',ev=>showTip(ev,`<b>${EN[e]} · ${k==='ai'?'AI share':'spam rate'}</b><br>r = ${d.r} · ${d.p}`));ci.addEventListener('mouseleave',hideTip);ci.addEventListener('click',()=>{fM=k;fE=e;$$('#fMetric button').forEach(b=>b.classList.toggle('on',b.dataset.v===k));$$('#fEngine button').forEach(b=>b.classList.toggle('on',b.dataset.v===e));drawF()})})});
  const lg=el('g',{transform:`translate(${W-230},6)`},s);el('circle',{cx:5,cy:5,r:5,fill:C.cyan},lg);el('text',{x:14,y:9,'font-size':11.5},lg,'AI share');el('circle',{cx:95,cy:5,r:5,fill:C.pink},lg);el('text',{x:104,y:9,'font-size':11.5},lg,'Spam rate')}
 drawF();
+
+/* ---------- Ask the thesis: LangGraph diagram + live run ---------- */
+(function(){
+ const svg=$('#ragGraph');if(!svg||!window.ThesisRAG)return;
+ const N={start:[260,22,'START'],rewrite:[260,82,'rewrite'],retrieve:[260,146,'retrieve'],grade:[260,210,'grade'],generate:[110,290,'generate'],clarify:[410,290,'clarify']};
+ const defs=el('defs',{},svg);const mk=el('marker',{id:'arw',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:7,markerHeight:7,orient:'auto-start-reverse'},defs);el('path',{d:'M0,0L10,5L0,10z',fill:'#7b8595'},mk);
+ const edges={};
+ function edge(id,d,label,lx,ly){const p=el('path',{d,fill:'none',stroke:'#b9c2cf','stroke-width':2,'marker-end':'url(#arw)'},svg);edges[id]=p;if(label)el('text',{x:lx,y:ly,'font-size':11,'text-anchor':'middle',fill:'#7b8595'},svg,label)}
+ edge('s-rw','M260,38 L260,64');edge('rw-rt','M260,100 L260,128');edge('rt-gr','M260,164 L260,192');
+ edge('gr-gen','M222,222 C170,240 130,250 116,270','relevant',150,236);
+ edge('gr-cl','M298,222 C350,240 392,250 404,270','still not relevant',392,236);
+ edge('gr-rw','M330,210 C420,200 420,92 334,84','retry once',448,150);
+ const boxes={};
+ Object.entries(N).forEach(([k,[x,y,t]])=>{const w=k==='start'?70:118,h=k==='start'?26:34;const g=el('g',{},svg);
+  const r=el('rect',{x:x-w/2,y:y-h/2,width:w,height:h,rx:k==='start'?13:9,fill:k==='start'?'#eef3f9':'#fff',stroke:'#b9c2cf','stroke-width':1.5},g);
+  el('text',{x,y:y+4.5,'text-anchor':'middle','font-size':13,'font-weight':600,fill:'#16202e','font-family':'JetBrains Mono,monospace'},g,t);boxes[k]=r});
+ function reset(){Object.entries(boxes).forEach(([k,r])=>{r.setAttribute('fill',k==='start'?'#eef3f9':'#fff');r.setAttribute('stroke','#b9c2cf')});Object.values(edges).forEach(p=>{p.setAttribute('stroke','#b9c2cf');p.setAttribute('stroke-width',2)})}
+ const COL={rewrite:'#0F4D92',retrieve:'#0F4D92',grade:'#0F4D92',generate:'#2f7a3b',clarify:'#B64342'};
+ const FILL={rewrite:'#e7eff8',retrieve:'#e7eff8',grade:'#e7eff8',generate:'#DDF3DE',clarify:'#F6CFCB'};
+ function lit(k){const r=boxes[k];r.setAttribute('fill',FILL[k]);r.setAttribute('stroke',COL[k])}
+ function litE(id,c){const p=edges[id];if(p){p.setAttribute('stroke',c||'#0F4D92');p.setAttribute('stroke-width',3)}}
+ reset();
+
+ const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const wait=ms=>new Promise(r=>setTimeout(r,reduce?0:ms));
+ let runId=0;
+ function terms(t){return t.filter(x=>!x.includes(' '))}
+ function highlight(node,text,words){const re=words.length?new RegExp('\\b('+words.map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')\\b','gi'):null;
+  if(!re){node.textContent=text;return}let last=0,m;while((m=re.exec(text))){node.appendChild(document.createTextNode(text.slice(last,m.index)));const mk=document.createElement('mark');mk.textContent=m[0];node.appendChild(mk);last=m.index+m[0].length}node.appendChild(document.createTextNode(text.slice(last)))}
+ function stepBox(name,sub){const d=document.createElement('div');d.className='step';const n=document.createElement('div');n.className='nm';n.textContent=name;if(sub){const s=document.createElement('small');s.textContent=sub;n.appendChild(s)}const b=document.createElement('div');d.append(n,b);$('#ragTrace').appendChild(d);return b}
+ function pageLink(p){const a=document.createElement('a');a.className='pg';a.href='Report.pdf#page='+p;a.target='_blank';a.rel='noopener';a.textContent='p. '+p;return a}
+
+ async function ask(q){q=q.trim();if(!q)return;const my=++runId;const t0=performance.now();const trace=ThesisRAG.run(q);const ms=performance.now()-t0;
+  reset();$('#ragTrace').innerHTML='';const ans=$('#ragAnswer');ans.className='rag-answer';ans.innerHTML='<p class="muted small" style="margin:0">Running the graph…</p>';
+  $('#ragMeta').textContent=`${ThesisRAG.size()} indexed passages · ran in ${ms<1?'<1':ms.toFixed(0)} ms`;
+  lit('rewrite');litE('s-rw');let prev=null;
+  for(const s of trace){if(my!==runId)return;
+   if(s.node==='rewrite'){if(prev==='grade')litE('gr-rw','#B64342');lit('rewrite');const b=stepBox('rewrite',s.attempt===1?'attempt 1':'attempt 2 · original wording');b.append('Query: ');const c=document.createElement('code');c.textContent=s.query;b.appendChild(c)}
+   if(s.node==='retrieve'){litE('rw-rt');lit('retrieve');const b=stepBox('retrieve',`top ${s.docs.length}`);
+    s.docs.forEach((d,i)=>{const h=document.createElement('div');h.className='hit'+(i===0?' show':'');const p=document.createElement('span');p.className='p';p.textContent='p. '+d.page;
+     const bar=document.createElement('div');bar.className='bar';const f=document.createElement('i');if(d.score<ThesisRAG.MIN_SCORE)f.className='low';f.style.width=Math.min(100,d.score/0.4*100)+'%';const th=document.createElement('b');th.style.left=(ThesisRAG.MIN_SCORE/0.4*100)+'%';th.title='relevance threshold 0.08';bar.append(f,th);
+     const sc=document.createElement('span');sc.className='s';sc.textContent=d.score.toFixed(3);const tx=document.createElement('div');tx.className='txt';highlight(tx,d.text,terms(d.terms));
+     h.append(p,bar,sc,tx);h.addEventListener('click',()=>h.classList.toggle('show'));b.appendChild(h)})}
+   if(s.node==='grade'){litE('rt-gr');lit('grade');const b=stepBox('grade','threshold 0.08');const v=document.createElement('span');v.className='verdict '+(s.relevant?'y':'n');v.textContent=s.relevant?'relevant':'not relevant';b.append(v,` best score ${s.best.toFixed(3)} ${s.relevant?'≥':'<'} 0.08`)}
+   if(s.node==='generate'){litE('gr-gen','#2f7a3b');lit('generate');stepBox('generate','extractive').textContent='Picked the 2 sentences that best overlap the question (numbers get a bonus for metric questions).';
+    ans.className='rag-answer ok';ans.innerHTML='';const a=document.createElement('p');a.className='a';a.textContent=s.answer;const src=document.createElement('div');src.className='src';src.append('Sources: ');s.pages.forEach(p=>src.appendChild(pageLink(p)));ans.append(a,src)}
+   if(s.node==='clarify'){litE('gr-cl','#B64342');lit('clarify');stepBox('clarify').textContent='Nothing relevant after two attempts, so the graph asks instead of guessing.';ans.className='rag-answer no';ans.innerHTML='';const a=document.createElement('p');a.className='a';a.textContent=s.answer;ans.appendChild(a)}
+   prev=s.node;await wait(380)}}
+ $('#ragForm').addEventListener('submit',e=>{e.preventDefault();ask($('#ragQ').value)});
+ $('#ragChips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;$('#ragQ').value=b.textContent;ask(b.textContent)});
+})();
 })();
 </script>
 </body>
